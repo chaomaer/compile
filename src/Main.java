@@ -9,12 +9,13 @@ import java.util.Arrays;
 public class Main {
 
     public static void main(String[] args) {
-        File file = new File("3.txt");
+        File file = new File("2.txt");
         ArrayList<String> arrayList = new ArrayList<>();
         String ss;
         ss = init(file,arrayList);
-        Language language = new Language(ss,arrayList,"S");
+        Language language = new Language(ss,arrayList,"M");
         language.generateSLR();
+//        language.testFirst();
     }
 
     public static String init(File file, ArrayList<String> arrayList) {

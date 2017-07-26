@@ -2,9 +2,10 @@ import java.util.*;
 
 public class Language {
     public ArrayList<String> terminalArraylist = new ArrayList<>();
-    public HashMap<String,ArrayList<String>>  nonterminalMap =  new HashMap<>();
+    public HashMap<String,ArrayList<String>>  nonterminalMap =  new LinkedHashMap<>();
     public ArrayList<String> nonterminalArraylist = new ArrayList<>();
     public String startsymbol;
+    private ArrayList<String> arrayList = new ArrayList<>();//这张表专门用来画图
 
     public void setTerminalArraylist(ArrayList<String> terminalArraylist){
         this.terminalArraylist = terminalArraylist;
@@ -204,13 +205,25 @@ public class Language {
             // s是非终结符号的前键
             ArrayList<String> arrayList = nonterminalMap.get(s);
             for (String s1 : arrayList) {
+                while (s1.contains(nonterminal)){
+                    if (s1.indexOf(nonterminal)+nonterminal.length()==s1.length()){
+                        // 说明是最后一个
+                        retlist.add(nonterminal);
+                        break;
+                    }else {
+                        int index = s1.indexOf(nonterminal)+nonterminal.length();
+                        s1 = s1.substring(index,s1.length());
+                        retlist.addAll(dealwithFollowNon(s,s1));
+                    }
+                }
                 if (s1.contains(nonterminal)){
                     //分三种情况进行讨论
                     //1.在最末端
                     if (s1.endsWith(nonterminal)){
                         // 直接加入前键
                         retlist.add(s);
-                    }else {
+                    }
+                    if (!s1.endsWith(nonterminal)||s1.indexOf(nonterminal)!=s1.lastIndexOf(nonterminal)){
                         int index = s1.indexOf(nonterminal)+nonterminal.length();
                         s1 = s1.substring(index,s1.length());
                         retlist.addAll(dealwithFollowNon(s,s1));
@@ -246,28 +259,106 @@ public class Language {
         storageQueue.add(slrItemSet);
         manageQueue.add(slrItemSet);
         //队列为空的时候，这时候才结束
+        inittable();
         while (!manageQueue.isEmpty()){
+            ArrayList<String> table = new ArrayList<>();
             SLRItemSet slrItemSet1 = manageQueue.poll();
-            System.out.println(slrItemSet1.getStatenum());
+            int bstate = slrItemSet1.getStatenum();
+//            System.out.println(slrItemSet1.getStatenum());
             HashSet<String> hashSet = slrItemSet1.getNextstringset();
+
             for (String s : hashSet) {
-                if (s ==null) continue;
+                boolean flag = false;
+                if (s ==null) {
+                    // 说明这个项目集合该规约了
+                    // 遍历集合，找到这条项目,获取编号，获取follow集合
+                    for (SLRItem item : slrItemSet1.items) {
+                        if (item.nextString == null){
+                            ArrayList<String> followset = Follow(item.key);
+                            int id = getid(item);
+                            for (String s1 : followset) {
+                                table.add(s1+"r"+id);
+                            }
+                            flag = true;
+                            break;
+                        }
+                    }
+                }
+                if (flag) continue;
                 SLRItemSet tmp = new SLRItemSet(slrItemSet1,s);
-                System.out.print("加入"+s+"之后");
                 tmp.getclosure();
-                int mstate;
-                if ((mstate = getstateFrompre(storageQueue,tmp))==-1){
+                int estate;
+                if ((estate = getstateFrompre(storageQueue,tmp))==-1){
                     tmp.setStatenum(getstate());
                     getstateFrompre(storageQueue,tmp);
-                    System.out.println("到达的状态是"+tmp.getStatenum());
+                    estate = tmp.getStatenum();
                     manageQueue.add(tmp);
                     storageQueue.add(tmp);
-                }else {
-                    System.out.println("到达的状态是"+mstate);
                 }
+                table.add(s+"s"+estate);
+            }
+            drawline(bstate,table);
+        }
+        System.out.println();
+    }
+
+    private int getid(SLRItem item) {
+        int id = 0;
+        String content = item.content;
+        String key = item.key;
+        for (String s : nonterminalMap.keySet()) {
+            if (key.equals(s)){
+                for (String s1 : nonterminalMap.get(s)) {
+                    if (s1.equals(content)){
+                        return id;
+                    }else {
+                        id += 1;
+                    }
+                }
+            }else {
+                id += nonterminalMap.get(s).size();
             }
         }
-        System.out.println("总共的状态数量是"+storageQueue.size());
+        return id;
+    }
+
+    private void drawline(int bstate, ArrayList<String> table) {
+        System.out.println();
+        boolean flag;
+        System.out.printf("%-10s",bstate);
+        for (String s : arrayList) {
+            flag = false;
+            for (String s1 : table) {
+                if (s1.startsWith(s)){
+                    String ss = s1.substring(1);
+                    if (ss.equals("r0")) {
+                        System.out.printf("%-10s","acc");
+                    }else if (nonterminalMap.keySet().contains(s)){
+                        System.out.printf("%-10s",ss.substring(1));
+                    }else System.out.printf("%-10s",ss);
+                    flag = true;
+                    break;
+                }
+            }
+            if (!flag){
+                System.out.printf("%-10s","");
+            }
+        }
+    }
+
+    private void inittable() {
+        for (String s : terminalArraylist) {
+            if (!s.equals("&")){
+                arrayList.add(s);
+            }
+        }
+        arrayList.add("$");
+        arrayList.addAll(nonterminalMap.keySet());
+        System.out.printf("%-10s","state");
+        for (String s : arrayList) {
+            if (!s.equals("&"))
+                System.out.printf("%-10s",s);
+        }
     }
 
     private int getstateFrompre(ArrayList<SLRItemSet> storageQueue, SLRItemSet tmp) {

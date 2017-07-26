@@ -4,7 +4,7 @@ import java.util.*;
  * 代表了一个项目集合
  */
 public class SLRItemSet {
-    private HashSet<SLRItem> items = new LinkedHashSet<>();
+    public HashSet<SLRItem> items = new LinkedHashSet<>();
     private HashSet<String> nextstringset = new LinkedHashSet<>();
     private HashSet<String> visitnon = new LinkedHashSet<>();
     private Language language;

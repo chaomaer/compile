@@ -5,6 +5,7 @@ public class SLRItem {
     public String key;
     public String content;
     public boolean isfinish = false;// 这个变量用来标记这个项目是否结束
+    public int id;//每一个项目都有一个编号，规约的时候要用到
     // 构建一个SLR项目需要注意
     // 为了使问题简单，终结符和非终结符均采用一个字符
     public SLRItem(String sentence){
