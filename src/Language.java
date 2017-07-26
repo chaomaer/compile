@@ -6,6 +6,7 @@ public class Language {
     public ArrayList<String> nonterminalArraylist = new ArrayList<>();
     public String startsymbol;
     private ArrayList<String> arrayList = new ArrayList<>();//这张表专门用来画图
+    private ArrayList<String> visitnon = new ArrayList<>(); //这张表用来防止first死锁
 
     public void setTerminalArraylist(ArrayList<String> terminalArraylist){
         this.terminalArraylist = terminalArraylist;
@@ -26,7 +27,7 @@ public class Language {
         }
         return null;
     }
-    private ArrayList<String> dealwithFirstNon(String key,String s){
+    private ArrayList<String> dealwithFirstNon(String s){
         ArrayList<String> arrayList = new ArrayList<>();
         // 为递归回来使用，首先检查是否是终结符，如果是:
         String ter = Isstartwithter(s);
@@ -36,7 +37,7 @@ public class Language {
             // 首先得到s开始得到非终结符
             String non = Isstartwithnon(s);
             assert non != null;
-            if (non.equals(key)) return arrayList;
+            if (visitnon.contains(non)) return arrayList;
             // 检查s的first集合中是否有&(代表空)
             ArrayList<String> firstset = First(non);
             if (firstset.contains("&")){
@@ -48,7 +49,7 @@ public class Language {
                 }else {
                     firstset.remove("&");
                     arrayList.addAll(firstset);
-                    arrayList.addAll(dealwithFirstNon(key,s.substring(non.length(),s.length())));
+                    arrayList.addAll(dealwithFirstNon(s.substring(non.length(),s.length())));
                 }
             }else {
                 // 如果没有空，直接全部加入，然后终结调用过程
@@ -102,6 +103,7 @@ public class Language {
         nonterminalArraylist.addAll(nonterminalMap.keySet());
     }
     public ArrayList<String> First(String nonterminal){
+        visitnon.add(nonterminal);
         ArrayList<String> retlist = new ArrayList<>();
         ArrayList<String> temps = nonterminalMap.get(nonterminal);
         for (String temp : temps) {
@@ -109,9 +111,10 @@ public class Language {
             if (( ter = Isstartwithter(temp))!=null){
                 retlist.add(ter);
             }else {
-                retlist.addAll(dealwithFirstNon(nonterminal,temp));
+                retlist.addAll(dealwithFirstNon(temp));
             }
         }
+        visitnon.remove(nonterminal);
         HashSet<String> hashSet = new HashSet<>();
         hashSet.addAll(retlist);
         retlist.clear();
@@ -264,10 +267,13 @@ public class Language {
             ArrayList<String> table = new ArrayList<>();
             SLRItemSet slrItemSet1 = manageQueue.poll();
             int bstate = slrItemSet1.getStatenum();
+//            System.out.println(bstate);
+//            printItemSet(slrItemSet1); //just for test
 //            System.out.println(slrItemSet1.getStatenum());
             HashSet<String> hashSet = slrItemSet1.getNextstringset();
 
             for (String s : hashSet) {
+//                System.out.println("加入"+s+"之后");
                 boolean flag = false;
                 if (s ==null) {
                     // 说明这个项目集合该规约了
@@ -292,8 +298,11 @@ public class Language {
                     tmp.setStatenum(getstate());
                     getstateFrompre(storageQueue,tmp);
                     estate = tmp.getStatenum();
+//                    printItemSet(tmp);
                     manageQueue.add(tmp);
                     storageQueue.add(tmp);
+                }else {
+//                    System.out.println("和"+estate+"重复");
                 }
                 table.add(s+"s"+estate);
             }
@@ -327,18 +336,21 @@ public class Language {
         boolean flag;
         System.out.printf("%-10s",bstate);
         for (String s : arrayList) {
+            StringBuffer sb = new StringBuffer();
             flag = false;
             for (String s1 : table) {
                 if (s1.startsWith(s)){
                     String ss = s1.substring(1);
                     if (ss.equals("r0")) {
-                        System.out.printf("%-10s","acc");
+                        sb.append("acc");
                     }else if (nonterminalMap.keySet().contains(s)){
-                        System.out.printf("%-10s",ss.substring(1));
-                    }else System.out.printf("%-10s",ss);
+                        sb.append(ss.substring(1));
+                    }else sb.append(ss);
                     flag = true;
-                    break;
                 }
+            }
+            if (flag){
+                System.out.printf("%-10s",sb.toString());
             }
             if (!flag){
                 System.out.printf("%-10s","");
@@ -362,8 +374,14 @@ public class Language {
     }
 
     private int getstateFrompre(ArrayList<SLRItemSet> storageQueue, SLRItemSet tmp) {
+
         for (SLRItemSet slrItemSet : storageQueue) {
             if (slrItemSet.equals(tmp)){
+//                System.out.println("重复");
+//                printItemSet(slrItemSet);
+//                System.out.println("---------");
+//                printItemSet(tmp);
+//                System.out.println("重复");
                 return slrItemSet.getStatenum();
             }
         }
@@ -378,11 +396,10 @@ public class Language {
     }
 
     private void printItemSet(SLRItemSet slrItemSet1) {
-        System.out.println(slrItemSet1.toString());
+//        System.out.println(slrItemSet1);
         HashSet<SLRItem> hashSet = slrItemSet1.getclosure();
         for (SLRItem slrItem : hashSet) {
             System.out.println(slrItem);
         }
-        System.out.println("------------------------------");
     }
 }

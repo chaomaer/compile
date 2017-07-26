@@ -21,7 +21,7 @@ public class SLRItem {
         this.key = slrItem.key;
         content = slrItem.content;
         postion = slrItem.postion+1;
-        if (postion == content.length()-1){
+        if (postion == content.length()-1||content.equals("&")){
             isfinish = true;
         }else {
             nextString = content.substring(postion+1,postion+2);
@@ -32,7 +32,11 @@ public class SLRItem {
         this.key = key;
         this.content = content;
         postion = -1;
-        nextString = content.substring(postion+1,postion+2);
+        if (content.equals("&")){
+            isfinish = true;
+        }else {
+            nextString = content.substring(postion+1,postion+2);
+        }
     }
 
     @Override

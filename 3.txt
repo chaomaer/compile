@@ -1,5 +1,3 @@
-+ * ( ) i
-S->E
-E->E+T|T
-T->T*F|F
-F->(E)|i
+a b c
+M->S
+S->aSSb|aSSS|c

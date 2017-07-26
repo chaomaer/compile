@@ -1,5 +1,8 @@
-+ * a b
-M->E
-E->E+T|T
-T->TF|F
-F->F*|a|b
+a & b c e d
+S->A
+A->BCDE
+B->aBA|&
+C->F|&
+D->b|c|&
+E->e|&
+F->d|&

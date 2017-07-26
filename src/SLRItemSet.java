@@ -24,6 +24,9 @@ public class SLRItemSet {
         if (!(obj instanceof SLRItemSet)) return false;
         boolean flag = false;
         SLRItemSet tmp = (SLRItemSet) obj;
+        if (items.size()!=tmp.items.size()){
+            return false;
+        }
         for (SLRItem item : items) {
             for (SLRItem slrItem : tmp.items) {
                 if (item.equals(slrItem)){
